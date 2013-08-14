@@ -1,0 +1,18 @@
+extends default
+
+block extra_head
+	link(rel="stylesheet",href="/stylesheets/pages/graph.css")
+
+block content
+	div#alert-area
+	div.panel.panel-primary
+		div.panel-heading CPU Usage 
+			span.badge#peer-count 0
+		div#cpu
+	div.panel.panel-primary
+		div.panel-heading Memory Usage
+		div#memory
+	script(src="/javascripts/lib/d3.v3.js")
+	script(src="/javascripts/pages/graph-cpu.js")
+	script(src="/javascripts/pages/graph-memory.js")
+	script(src="/javascripts/pages/graph.js")

@@ -1,0 +1,11 @@
+extends default
+
+block content
+  div#alert-area
+  div.panel.panel-primary
+    div.panel-heading Current Status 
+      span.badge#peer-count 0
+  div.panel
+    div.panel-heading  Debug Messages
+    textarea#status-logging
+  script(src='/javascripts/pages/status.js')

@@ -1,0 +1,24 @@
+extends default
+
+block content
+	table.table.table-striped.table-bordered
+		thead
+			tr
+				th Command
+				th Operation
+				th Command
+				th Operation
+		tbody
+			tr
+				td 0x2001
+				td 开始CPU采样
+				td 0x2101
+				td 结束CPU采样
+			tr
+				td 0x2002
+				td 开始内存采样
+				td 0x2102
+				td 结束内存采样
+			tr
+				td 0x3002
+				td 执行Home页刷新

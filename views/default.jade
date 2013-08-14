@@ -1,0 +1,24 @@
+doctype 5
+html
+  head
+    title= title
+    link(rel='stylesheet', href='/stylesheets/lib/bootstrap.css')
+    link(rel='stylesheet', href='/stylesheets/site.css')
+    script(src='/javascripts/lib/jquery-1.7.2.js')
+    script(src='/javascripts/lib/bootstrap.js')
+    script(src='/javascripts/site.js')
+    block extra_head
+  body
+    ul.nav.nav-tabs
+      li
+        a(href='/') Home
+      li
+        a(href='/control') Control
+      li
+        a(href='/graph') Graph
+      li
+        a(href='/status') Status
+      li
+        a(href='/help') Help
+    div.main
+      block content

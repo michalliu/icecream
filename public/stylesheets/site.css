@@ -1,0 +1,9 @@
+.main{
+margin: 20px 10px 0 10px;
+}
+#status-logging{
+	min-height:200px;
+	width:100%;
+	font-family:consolas,menlo,monaco;
+	font-size:10px;
+}

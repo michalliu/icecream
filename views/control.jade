@@ -1,0 +1,14 @@
+extends default
+
+block content
+  div#alert-area
+  div.panel.panel-primary
+    div.panel-heading Control Panel
+    div.row
+      div.col-lg-4
+        div.input-group
+          span.input-group-addon Command
+          input.form-control#command_input(type='text', placeholder='0x20001', value='0x20001')
+          span.input-group-btn
+            button.btn.btn-default#command_fire(type='button') send
+  script(src='/javascripts/pages/control.js')
