@@ -11,3 +11,4 @@ exports.control = require('./control');
 exports.graph = require('./graph');
 exports.status = require('./status');
 exports.help = require('./help');
+exports.api = require('./api');

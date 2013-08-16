@@ -33,6 +33,7 @@ app.get('/control', routes.control.index);
 app.get('/graph', routes.graph.index);
 app.get('/status', routes.status.index);
 app.get('/help', routes.help.index);
+app.get(/\/api\/(\w+$)/, routes.api.index);
 
 socket.start(http.createServer(app).listen(app.get('port'), function(){
   console.log('Server listening on port ' + app.get('port'));
