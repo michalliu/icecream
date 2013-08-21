@@ -1,4 +1,4 @@
-/*globals require, process, __dirname, console*/
+/*globals require, process, __dirname, console,GLOBAL*/
 /**
  * Module dependencies.
  */
@@ -6,11 +6,15 @@
 var express = require('express')
   , routes = require('./routes')
   , http = require('http')
-  , path = require('path');
+  , path = require('path')
+  , appsocket = require('./app-socket');
 
-var socket = require('./app-socket').server;
+var socket = appsocket.server;
 
 var app = express();
+
+GLOBAL.ROOT_PATH=__dirname;
+GLOBAL.SERVER_EVENT= appsocket.serverEvent;
 
 // all environments
 app.set('port', process.env.PORT || 8000);

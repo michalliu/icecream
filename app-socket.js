@@ -2,6 +2,7 @@
 // var SERVER_PORT=8000;
 
 var WebSocket = require('websocket');
+var EventEmitter = require('events').EventEmitter;
 var WebSocketServer = WebSocket.server;
 var childProcess = require('child_process');
 
@@ -16,6 +17,8 @@ var undef;
 var cpuProfilingProcess;
 var memProfilingProcess;
 var resourceOwnerClient;
+
+var serverEvent = new EventEmitter();
 
 var ROLE={
 	STATUS: 'status',
@@ -46,7 +49,11 @@ var COMMAND={
 	
 	// RESOURCE OWNER COMMAND
 	RESOURCE_COMMAND_ADDR:    0x30000,
-	RESOURCE_COMMAND_ADDR_RESERVE:    0x1000
+	RESOURCE_COMMAND_ADDR_RESERVE:    0x1000,
+
+	// RESOURCE OWNER STATUS REPORT
+	RESOURCE_PA_START:    0x40000,
+	RESOURCE_PA_STOP:    0x41000
 };
 
 function now(){
@@ -109,6 +116,7 @@ logger = {
 	}
 };
 
+exports.serverEvent=serverEvent;
 exports.server={
 	start: function (httpd) {
 		var wsServer = new WebSocketServer({
@@ -234,6 +242,7 @@ exports.server={
 					// other peer who declared as control will be disconnected
 					if (!resourceOwnerClient || !resourceOwnerClient.connected) {
 						resourceOwnerClient=connection;
+						serverEvent.emit('resouceOwnerConnected', resourceOwnerClient);
 					} else {
 						pushMessage(connection,{
 							type:COMMAND.ERROR_MESSAGE,
@@ -246,6 +255,17 @@ exports.server={
 				}
 			}
 
+			function handleResourceStatusMessage(resourceStatusMessage) {
+				var msg = resourceStatusMessage;
+				if (msg.resourceStatus === COMMAND.RESOURCE_PA_START) {
+					serverEvent.emit('resouceOwnerPaStart', resourceOwnerClient);
+				} else if(msg.resourceStatus === COMMAND.RESOURCE_PA_STOP) {
+					serverEvent.emit('resouceOwnerPaStop', resourceOwnerClient);
+				} else {
+					logger.log('Incorrect resouce status ' + msg.resourceStatus);
+				}
+			}
+
 			connection.on('message', function onWSServer_message(message){
 				var oMessage;
 				if (message.type === 'utf8') {
@@ -255,6 +275,8 @@ exports.server={
 						handleRoleMessage(oMessage);
 					} else if(oMessage.command) {
 						handleCommandMessage(oMessage);
+					} else if(oMessage.resourceStatus) {
+						handleResourceStatusMessage(oMessage);
 					} else {
 						logger.log('Drop wired message ' + message);
 					}
@@ -286,6 +308,7 @@ exports.server={
 				}
 				if (resourceOwnerClient===connection) {
 					resourceOwnerClient = null;
+					serverEvent.emit('resouceOwnerDisconnected');
 				}
 				logger.log(count(clients) + ' peers is live,' + count(statusClients) + ' status peers,' + count(graphClients) + ' graph peers' + (controlClient ? ' 1' : ' 0') + ' control peer' + (resourceOwnerClient ? ' 1' : ' 0') + ' resource peer');
 			});

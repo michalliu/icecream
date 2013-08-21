@@ -3,7 +3,7 @@ var EventEmitter = require('events').EventEmitter;
 var handler = new EventEmitter();
 
 setTimeout(function () {
-	main.emit('exit', 0, 'test');
-}, 1000);
+	handler.emit('exit', 0, 'test');
+}, 500);
 
 exports.handler=handler;
