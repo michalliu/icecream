@@ -15,7 +15,6 @@ exports.index = function(req, res){
 	if (apiModule) {
 		apiHandler=apiModule.handler;
 		apiHandler.removeAllListeners("exit");
-		apiHandler.tick();
 		apiHandler.on("exit", function (exitcode, data) {
 			res.json(200, {
 				ret:exitcode,
@@ -23,6 +22,7 @@ exports.index = function(req, res){
 				data: data
 			});
 		});
+		apiHandler.tick();
 	} else {
 		res.json(200, {
 			ret:-1,
