@@ -1,3 +1,4 @@
 *.png
+*.pyc
 log.txt
 mail_cfg.py
