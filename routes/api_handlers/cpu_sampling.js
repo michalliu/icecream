@@ -22,8 +22,8 @@ function pushMessage(connections, message) {
 	}
 }
 
-if (false) {
 handler.tick = function () {
+if (false) {
 	var samplingData=[
     "connected",
     "0",

@@ -3,7 +3,7 @@ var WS_SERVER=document.location.origin.replace(/^http/,'ws');
 var COMMAND={
 	// 0x1*** Messages
 	STATUS_PEER_COUNT_UPDATE: 0x1000,
-	GRAPH_PEER_COUNT_UPDATE:  0X1001,
+	GRAPH_PEER_COUNT_UPDATE:  0x1001,
 	LOGGING_MESSAGE_UPDATE:   0x1002,
 	ERROR_MESSAGE:            0x1003,
 	CPU_USAGE:                0x1004,
