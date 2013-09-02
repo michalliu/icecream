@@ -2,7 +2,7 @@
 #-*- coding: utf-8 -*-
 
 import sys,exceptions
-import urllib2,logging,json
+import urllib2,logging,json,re
 from rpy import r
 from mail import send_mail
 
@@ -122,24 +122,26 @@ def drawCpuUsage(d,xat,xlbs,pic):
 
 	r.dev_off()
 
+def processLabel(inStr):
+	step = re.match(r'op_step(?P<step>\d+),(?P<totalstep>\d+)',inStr)
+	if step:
+		return "%s/%s" % step.group('step','totalstep')
+	return inStr
+
 def processCpuSamplingData(cpudata):
 	data=[]
 	at=[]
 	labels=[]
-	c=0
 	for idx,val in enumerate(cpudata):
 		try:
 			d=float(val)
 			data.append(d)
 		except exceptions.ValueError:
-			if idx == len(cpudata)-1:
-				# the last label always point to the last data
-				at.append(len(data))
-			else:
-				# let label point to the right data
-				at.append(idx-c)
-			labels.append(val)
-			c+=1
+			data_pos=len(data)+1
+			data_pos=max(1,data_pos)
+			at.append(data_pos)
+			labels.append(processLabel(val))
+
 	logger.info('output image %s' % pic_cpu_usage)
 	drawCpuUsage(data,at,labels,pic_cpu_usage)
 
@@ -173,7 +175,7 @@ def main():
 	initLogger()
 	initUrlLib()
 	cpuSampling()
-	sendMail()
+	#sendMail()
 
 
 if __name__ == '__main__':

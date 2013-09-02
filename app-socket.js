@@ -262,7 +262,7 @@ exports.server={
 				} else if(msg.resourceStatus === COMMAND.RESOURCE_PA_STOP) {
 					serverEvent.emit('resouceOwnerPaStop', resourceOwnerClient);
 				} else {
-					logger.log('Incorrect resouce status ' + msg.resourceStatus);
+					serverEvent.emit('resourceOwnerPaStep',msg.resourceStatus);
 				}
 			}
 
