@@ -2,16 +2,25 @@
 #-*- coding: utf-8 -*-
 
 import sys,exceptions
-import urllib2,logging,json,re
+import urllib2,logging,json,re,time
 from rpy import r
 from mail import send_mail
 
 api_host="http://127.0.0.1:8000/api/"
 api_cpu_sampling=api_host+"cpu_sampling"
+api_mem_sampling_login=api_host+"mem_sampling_login"
 
 pic_cpu_usage="cpu_usage.png"
 
 logger=None
+start_time=None
+
+def timeStart():
+	global start_time
+	start_time=time.time()
+
+def timeEnd():
+	logger.info('%s seconds' % (time.time()-start_time))
 
 def initLogger():
 
@@ -41,10 +50,23 @@ def initUrlLib():
 
 def urlReq(url):
 	logger.info('Request %s' % url)
-	response=urllib2.urlopen(url,None,60 * 30)
-	text=response.read()
-	logger.info(text)
-	return text
+	response=None
+
+	timeStart()
+	try:
+		response=urllib2.urlopen(url,None,60 * 300)
+	except:
+		logger.error("URL request exception", exc_info=1)
+
+	timeEnd()
+
+	if response:
+		text=response.read()
+		logger.info(text)
+		return text
+	else:
+		logger.info("Stoped")
+		sys.exit(2)
 
 def test():
 	data=r.c([1.25,3.45,6.75,20.2,9.9])
@@ -157,6 +179,17 @@ def cpuSampling():
 	else:
 		sys.exit(-1)
 
+def memSampling():
+	logger.info('Start Mem sampling')
+	result=urlReq(api_mem_sampling_login)
+	jsonResult=json.loads(result)
+	retCode=jsonResult['ret']
+	data=jsonResult['data']
+	if retCode == 0 and data != None:
+		pass
+	else:
+		sys.exit(-1)
+
 def sendMail():
 	logger.info('send mail')
 	mailHtml=u"""
@@ -174,7 +207,9 @@ def sendMail():
 def main():
 	initLogger()
 	initUrlLib()
-	cpuSampling()
+	#cpuSampling()
+
+	memSampling()
 	#sendMail()
 
 
