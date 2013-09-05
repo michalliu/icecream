@@ -53,6 +53,7 @@ var COMMAND={
 
 	// RESOURCE OWNER STATUS REPORT
 	RESOURCE_PA_START:    0x40000,
+	RESOURCE_PA_ASSERTION_FAIL:    0x40001,
 	RESOURCE_PA_STOP:    0x41000
 };
 
@@ -259,6 +260,8 @@ exports.server={
 				var msg = resourceStatusMessage;
 				if (msg.resourceStatus === COMMAND.RESOURCE_PA_START) {
 					serverEvent.emit('resouceOwnerPaStart', resourceOwnerClient);
+				} else if(msg.resourceStatus === COMMAND.RESOURCE_PA_ASSERTION_FAIL) {
+					serverEvent.emit('resouceOwnerPaAssertionFail', msg.info);
 				} else if(msg.resourceStatus === COMMAND.RESOURCE_PA_STOP) {
 					serverEvent.emit('resouceOwnerPaStop', resourceOwnerClient);
 				} else {
