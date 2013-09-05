@@ -232,28 +232,28 @@ def initEnv():
 	appdata=os.getenv('LOCALAPPDATA')
 	packages=os.path.join(appdata,'Packages')
 	package_qq=[x for x in os.listdir(packages) if re.match(r"903DB504\.QQ",x)]
-	saved_settings='LocalState.zip'
+	saved_settings=os.path.join(os.getcwd(),'LocalState')
 
 	if len(package_qq) == 0:
 		logger.error('QQ is not found, may be not installed?')
 		sys.exit(1)
 
-	if os.path.isfile(saved_settings):
-		logger.info('overwrite settings using file %s' % saved_settings)
+	if os.path.isdir(saved_settings):
+		logger.info('overwrite settings from %s' % saved_settings)
 		qq_path=os.path.join(packages,package_qq[0])
-		setting_folder=os.path.join(qq_path,'LocalState')
+		setting_folder=os.path.join(qq_path,'LocalState\\')
 		if os.path.isdir(setting_folder):
-			logger.info('delete folder %s' % setting_folder)
 			shutil.rmtree(setting_folder)
-		fp=zipfile.ZipFile(saved_settings,'r')
-		fp.extractall(qq_path)
-		fp.close()
+		# retain permissions and ownership
+		# http://support.microsoft.com/kb/323007
+		os.system(r"xcopy %s %s /O /X /E /H /K /Q" % (saved_settings, setting_folder))
 
 def main():
 	initLogger()
 	initUrlLib()
 	initEnv()
 
+	sys.exit(0)
 	#cpuSampling()
 	mem_login=memSampling(api_mem_sampling_login)
 	print mem_login
