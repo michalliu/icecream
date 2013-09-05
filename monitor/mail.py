@@ -60,7 +60,7 @@ def send_mail(send_from, send_to, subject, html=None, text='text version is not 
 
 if __name__ == "__main__":
 	send_mail(send_from="win8qqhelper@tencent.com",
-			send_to=["michalliu@tencent.com"],
+			send_to=["michalliu@tencent.com","iscowei@tencent.com"],
 			subject="【Win8QQ项目】性能报告",
 			html=u'<b>cpu使用情况</b><img src="cid:cpu_usage.png"/>',
 			images=["cpu_usage.png"])
