@@ -2,3 +2,5 @@
 *.pyc
 log.txt
 mail_cfg.py
+LocalState/
+mail.html
