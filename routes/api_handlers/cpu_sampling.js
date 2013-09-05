@@ -79,6 +79,8 @@ if (false) {
 
 	SERVER_EVENT.on('resouceOwnerPaAssertionFail', function (errorinfo) {
 		handler.emit('exit',1,errorinfo);
+		// emit fake event to kill resource owner
+		SERVER_EVENT.emit('resouceOwnerPaStop');
 	});
 
 	SERVER_EVENT.on('resouceOwnerPaStop', function () {
