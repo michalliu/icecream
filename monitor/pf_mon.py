@@ -176,7 +176,7 @@ def cpuSampling():
 		processCpuSamplingData(data)
 	else:
 		sendErrorMail(errorReport("API请求错误 %s" % api_cpu_sampling, result))
-		sys.exit(1)
+		sys.exit(0)
 
 def memSampling(url):
 	logger.info('Start Mem sampling')
@@ -188,7 +188,7 @@ def memSampling(url):
 		return processMemSamplingData(data)
 	else:
 		sendErrorMail(errorReport("API请求错误 %s" % url, result))
-		sys.exit(1)
+		sys.exit(0)
 
 def processMemSamplingData(data):
 	ma = mb = me = mc = md = n = None
@@ -256,7 +256,7 @@ def initEnv():
 	if len(package_qq) == 0:
 		logger.error('QQ is not found, may be not installed?')
 		sendErrorMail(errorReport("没有找到Win8QQ"))
-		sys.exit(1)
+		sys.exit(0)
 
 	if os.path.isdir(saved_settings):
 		logger.info('overwrite settings from %s' % saved_settings)
@@ -273,12 +273,10 @@ def main():
 	initUrlLib()
 	initEnv()
 
-	cpuSampling()
+	#cpuSampling()
 	mem_login=memSampling(api_mem_sampling_login)
+	return
 	mem_aio=memSampling(api_mem_sampling_aio)
-	print mem_login
-	print mem_aio
-	sys.exit(0)
 	mem_buddy_list=memSampling(api_mem_sampling_buddy_list)
 	mem_group_list=memSampling(api_mem_sampling_group_list)
 	mem_qz=memSampling(api_mem_sampling_qz)
