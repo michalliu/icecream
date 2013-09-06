@@ -59,21 +59,11 @@ def initUrlLib():
 
 def urlReq(url):
 	logger.info('Request %s' % url)
-	response=None
-
-	timeStart()
-	try:
-		response=urllib2.urlopen(url,None,60 * 300)
-	except:
-		logger.error("URL request exception", exc_info=1)
-
-	timeEnd()
-
+	response=urllib2.urlopen(url,None,60 * 300)
 	if response:
 		text=response.read()
 		logger.info(text)
 		return text
-
 	return None
 
 def test():
@@ -358,6 +348,11 @@ def main():
 
 	sendMail(mailHtmlContent)
 
-
 if __name__ == '__main__':
-	main()
+	try:
+		main()
+	except KeyboardInterrupt:
+		pass
+	except:
+		logger.error("script exit", exc_info=1)
+		sendErrorMail(errorReport("脚本执行异常","详细信息查看log"))
