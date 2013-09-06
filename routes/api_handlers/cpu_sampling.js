@@ -27,7 +27,7 @@ if (false) {
 	var samplingData=[
   ];
 		handler.emit('exit',0,samplingData);
-		return
+		return;
 }
 	var cpuSamplingProcess;
 	var undef;
@@ -36,12 +36,14 @@ if (false) {
 
 	function killCpuSampling(){
 		if(cpuSamplingProcess) {
+			console.log('kill cpu sampling process')
 			cpuSamplingProcess.kill();
 			cpuSamplingProcess = null;
 		}
 	}
 
 	function killResourceOwner() {
+		console.log('kill resource owner')
 		childProcess.spawn(bin, ['kill'], {
 			cwd:undef,
 			env:process.env
@@ -78,9 +80,8 @@ if (false) {
 	});
 
 	SERVER_EVENT.on('resouceOwnerPaAssertionFail', function (errorinfo) {
-		handler.emit('exit',1,errorinfo);
-		// emit fake event to kill resource owner
 		SERVER_EVENT.emit('resouceOwnerPaStop');
+		handler.emit('exit',1,errorinfo);
 	});
 
 	SERVER_EVENT.on('resouceOwnerPaStop', function () {

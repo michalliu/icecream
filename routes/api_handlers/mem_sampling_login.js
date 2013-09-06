@@ -36,12 +36,14 @@ handler.tick = function () {
 
 	function killMemSampling(){
 		if(memSamplingProcess) {
+			console.log('kill mem sampling process')
 			memSamplingProcess.kill();
 			memSamplingProcess = null;
 		}
 	}
 
 	function killResourceOwner() {
+		console.log('kill resource owner')
 		childProcess.spawn(bin, ['kill'], {
 			cwd:undef,
 			env:process.env
@@ -75,6 +77,12 @@ handler.tick = function () {
 
 	SERVER_EVENT.on('resourceOwnerPaStep', function (stepStatus) {
 		samplingData.push('op_step'+stepStatus);
+	});
+
+	SERVER_EVENT.on('resouceOwnerPaAssertionFail', function (errorinfo) {
+		// emit fake event to kill resource owner
+		SERVER_EVENT.emit('resouceOwnerPaStop');
+		handler.emit('exit',1,errorinfo);
 	});
 
 	SERVER_EVENT.on('resouceOwnerPaStop', function () {
