@@ -52,15 +52,15 @@ def send_mail(send_from, send_to, subject, html=None, text='text version is not 
 		msg.attach(part)
 
 	smtp=smtplib.SMTP()
-	#smtp.connect(SMTP_HOST)
-	smtp.connect(SMTP_HOST_ANONYMOUS)
+	smtp.connect(SMTP_HOST)
+	#smtp.connect(SMTP_HOST_ANONYMOUS)
 	smtp.login(SMTP_LOGIN,SMTP_PASSWD)
 	smtp.sendmail(send_from, send_to, msgRoot.as_string())
 	smtp.quit()
 
 if __name__ == "__main__":
 	send_mail(send_from="win8qqhelper@tencent.com",
-			send_to=["michalliu@tencent.com","iscowei@tencent.com"],
-			subject="【Win8QQ项目】性能报告",
+			send_to=["michalliu@tencent.com"],
+			subject="【Win8QQ项目】性能报告测试",
 			html=u'<b>cpu使用情况</b><img src="cid:cpu_usage.png"/>',
 			images=["cpu_usage.png"])

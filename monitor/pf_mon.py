@@ -2,11 +2,12 @@
 #-*- coding: utf-8 -*-
 
 import sys,os,exceptions
-import urllib2,logging,json,re,time,shutil,zipfile
+import urllib2,logging,json,re,time,shutil
 from rpy import r
 from mail import send_mail
 
 developers=("alvinshen","danneyyang","iscowei","louishliu","michalliu","cindytwu","gavincai","wadesheng","kingsan","robotding","stacyli","stargu")
+error_reciever=("michalliu",)
 
 api_host="http://127.0.0.1:8000/api/"
 api_cpu_sampling=api_host+"cpu_sampling"
@@ -17,6 +18,8 @@ api_mem_sampling_group_list=api_host+"mem_sampling_group_list"
 api_mem_sampling_qz=api_host+"mem_sampling_qz"
 
 pic_cpu_usage="cpu_usage.png"
+
+logFile="log.txt"
 
 logger=None
 start_time=None
@@ -35,7 +38,7 @@ def initLogger():
 	logger = logging.getLogger('pf_mon')
 	logger.setLevel(logging.DEBUG)
 
-	fh = logging.FileHandler('log.txt')
+	fh = logging.FileHandler(logFile)
 	fh.setLevel(logging.DEBUG)
 
 	ch = logging.StreamHandler()
@@ -70,9 +73,8 @@ def urlReq(url):
 		text=response.read()
 		logger.info(text)
 		return text
-	else:
-		logger.info("Stoped")
-		sys.exit(2)
+
+	return None
 
 def test():
 	data=r.c([1.25,3.45,6.75,20.2,9.9])
@@ -183,7 +185,20 @@ def cpuSampling():
 	if retCode == 0 and data != None:
 		processCpuSamplingData(data)
 	else:
-		sys.exit(-1)
+		sendErrorMail(errorReport("API请求错误 %s" % api_cpu_sampling, result))
+		sys.exit(1)
+
+def memSampling(url):
+	logger.info('Start Mem sampling')
+	result=urlReq(url)
+	jsonResult=json.loads(result)
+	retCode=jsonResult['ret']
+	data=jsonResult['data']
+	if retCode == 0 and data != None:
+		return processMemSamplingData(data)
+	else:
+		sendErrorMail(errorReport("API请求错误 %s" % url, result))
+		sys.exit(1)
 
 def processMemSamplingData(data):
 	ma = mb = me = mc = md = n = None
@@ -208,16 +223,30 @@ def processMemSamplingData(data):
 		logger.error("error while process memory sampling data")
 	return (mc,md)
 
-def memSampling(url):
-	logger.info('Start Mem sampling')
-	result=urlReq(url)
-	jsonResult=json.loads(result)
-	retCode=jsonResult['ret']
-	data=jsonResult['data']
-	if retCode == 0 and data != None:
-		return processMemSamplingData(data)
-	else:
-		sys.exit(-1)
+def errorReport(title,content="无内容"):
+	logStr=""
+	if os.path.isfile(logFile):
+		fp=open(logFile,'r')
+		logTail=fp.readlines()[-100:]
+		logStr='<br/>'.join([line for line in logTail])
+
+	return """
+	<html>
+	<body>
+	<h4>%s</h4>
+	<p>%s</p>
+	<h4>Log</h4>
+	<p>%s</p>
+	</body>
+	</html>
+	""" % (title, content, logStr)
+
+def sendErrorMail(content):
+	logger.info('send error mail')
+	send_mail(send_from="win8qqhelper@tencent.com",
+			send_to=["%s@tencent.com" % rtx for rtx in error_reciever],
+			subject="【Win8QQ项目】性能报告生成出错提醒",
+			html=content)
 
 def sendMail(content):
 	logger.info('send mail')
@@ -236,6 +265,7 @@ def initEnv():
 
 	if len(package_qq) == 0:
 		logger.error('QQ is not found, may be not installed?')
+		sendErrorMail(errorReport("没有找到Win8QQ"))
 		sys.exit(1)
 
 	if os.path.isdir(saved_settings):
@@ -253,18 +283,18 @@ def main():
 	initUrlLib()
 	initEnv()
 
-	sys.exit(0)
-	#cpuSampling()
+	cpuSampling()
 	mem_login=memSampling(api_mem_sampling_login)
-	print mem_login
-	sys.exit(0)
 	mem_aio=memSampling(api_mem_sampling_aio)
+	print mem_login
+	print mem_aio
+	sys.exit(0)
 	mem_buddy_list=memSampling(api_mem_sampling_buddy_list)
 	mem_group_list=memSampling(api_mem_sampling_group_list)
 	mem_qz=memSampling(api_mem_sampling_qz)
 
 	# mail HTML content
-	mailHtmlContent=u"""
+	mailHtmlContent="""
 	<html>
 	<body>
 	<h3>Win8QQ性能报告(测试版，数据仅供参考)</h3>
