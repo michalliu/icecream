@@ -49,6 +49,27 @@ def save_api_req_result(version,sampl_id,api_name,api_result,req_time,req_end_ti
 	cur.execute(sql)
 	conn.commit()
 
+def query_api_data(version, sampl_id, api_name):
+	"""
+	提取数据
+	version 前版本号,如 '2.0.6'
+	sampl_id 当前本版取样id标识符,如'1'
+	api_name 所请求的api名称,如'cpu_sampling'
+	"""
+
+	cur=conn.cursor();
+	req_id=get_apiid_byname(api_name)
+	sql="SELECT api_req_result FROM api_req_data WHERE qq_version='%(qq_version)s' AND samp_id=%(samp_id)d AND api_req_id=%(api_req_id)d" % {
+			"qq_version": version,
+			"samp_id": int(sampl_id),
+			"api_req_id": int(req_id)
+			}
+	cur.execute(sql)
+	data = cur.fetchone()
+	if data:
+		return data[0]
+	return None
+
 def close():
 	conn.close()
 
@@ -56,12 +77,16 @@ def main():
 	#t=get_apiname_byid(1)
 	#print t
 	#print get_apiid_byname(t)
-	save_api_req_result(version='2.0.6',
-			sampl_id='1',
-			api_name='cpu_sampling',
-			api_result=u'失败',
-			req_time=time.localtime(),
-			req_end_time=time.localtime(),
+	#save_api_req_result(version='2.0.6',
+	#		sampl_id=2,
+	#		api_name='cpu_sampling',
+	#		api_result=u'失败',
+	#		req_time=time.localtime(),
+	#		req_end_time=time.localtime(),
+	#		)
+	query_api_data(version='2.0.6',
+			sampl_id=2,
+			api_name='cpu_sampling'
 			)
 
 if __name__ == "__main__":
