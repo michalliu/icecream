@@ -5,31 +5,25 @@ import sys,os,exceptions
 import urllib2,logging,json,re,time,shutil
 from rpy import r
 from mail import send_mail
+import db
 
 developers=("alvinshen","danneyyang","iscowei","louishliu","michalliu","cindytwu","gavincai","wadesheng","kingsan","robotding","stacyli","stargu")
 error_reciever=("michalliu",)
 
 api_host="http://127.0.0.1:8000/api/"
-api_cpu_sampling=api_host+"cpu_sampling"
-api_mem_sampling_login=api_host+"mem_sampling_login"
-api_mem_sampling_aio=api_host+"mem_sampling_aio"
-api_mem_sampling_buddy_list=api_host+"mem_sampling_buddy_list"
-api_mem_sampling_group_list=api_host+"mem_sampling_group_list"
-api_mem_sampling_qz=api_host+"mem_sampling_qz"
+api_cpu_sampling="cpu_sampling"
+api_mem_sampling_login="mem_sampling_login"
+api_mem_sampling_aio="mem_sampling_aio"
+api_mem_sampling_buddy_list="mem_sampling_buddy_list"
+api_mem_sampling_group_list="mem_sampling_group_list"
+api_mem_sampling_qz="mem_sampling_qz"
 
 pic_cpu_usage="cpu_usage.png"
 
 logFile="log.txt"
 
 logger=None
-start_time=None
-
-def timeStart():
-	global start_time
-	start_time=time.time()
-
-def timeEnd():
-	logger.info('%s seconds' % (time.time()-start_time))
+cfg=None
 
 def initLogger():
 
@@ -57,13 +51,34 @@ def initUrlLib():
 	opener=urllib2.build_opener(proxy_handler)
 	urllib2.install_opener(opener)
 
-def urlReq(url):
+def urlReq(api_name):
+	url="%s%s"%(api_host,api_name)
 	logger.info('Request %s' % url)
+	req_time=time.localtime()
 	response=urllib2.urlopen(url,None,60 * 300)
+	req_end_time=time.localtime()
 	if response:
 		text=response.read()
 		logger.info(text)
+		jsonResult=json.loads(text)
+		retCode=jsonResult['ret']
+		data=jsonResult['data']
+
+		if retCode == 0 and data != None:
+			try:
+				db.save_api_req_result(version=cfg["cur_qq_version"],
+					sampl_id=cfg["sampl_id"],
+					api_name=api_name,
+					api_result=text.decode('utf-8'),
+					req_time=req_time,
+					req_end_time=req_end_time
+					)
+			except Exception,e:
+				sendErrorMail(errorReport("写入数据库出错", "%s" % e))
+				sys.exit(1)
+
 		return text
+
 	return None
 
 def test():
@@ -178,19 +193,52 @@ def cpuSampling():
 		sendErrorMail(errorReport("API请求错误 %s" % api_cpu_sampling, result))
 		sys.exit(1)
 
-def memSampling(url):
+def memSampling(api_name):
 	logger.info('Start Mem sampling')
-	result=urlReq(url)
+	result=urlReq(api_name)
 	jsonResult=json.loads(result)
 	retCode=jsonResult['ret']
 	data=jsonResult['data']
 	if retCode == 0 and data != None:
-		return processMemSamplingData(data)
+		# they use different algorithm to caculate ma mb and me
+		if api_name == api_mem_sampling_login:
+			return processMemSamplingDataLogin(data)
+		elif api_name in (api_mem_sampling_aio,
+				api_mem_sampling_buddy_list,
+				api_mem_sampling_group_list,
+				api_mem_sampling_qz):
+			return processMemSamplingDataHome(data)
+		else:
+			sendErrorMail(errorReport("未针对此api实现内存数据分析方法 %s" % api_name))
+			sys.exit(1)
 	else:
-		sendErrorMail(errorReport("API请求错误 %s" % url, result))
+		sendErrorMail(errorReport("API请求错误 %s" % api_name, result))
 		sys.exit(1)
 
-def processMemSamplingData(data):
+def processMemSamplingDataHome(data):
+	ma = mb = me = mc = md = n = None
+	for idx,val in enumerate(data):
+		if re.match(r"op_step1,2,1,(?P<n>\d+)",val):
+			ma = data[idx-1]
+		elif re.match(r"op_step1,2,2,(?P<n>\d+)",val):
+			mb = data[idx-1]
+			n = re.match(r"op_step1,2,2,(?P<n>\d+)",val).group('n')
+		elif val == "op_end":
+			me = data[idx-1]
+	if ma and mb and me and n:
+		ma=int(ma)
+		mb=int(mb)
+		me=int(me)
+		n=int(n)
+		md = (me - mb) / (n - 1)
+		mc = mb - ma - md
+		logger.info("ma=%d,mb=%d,me=%d,n=%d" % (ma,mb,me,n))
+		logger.info("mc=%d,md=%d" % (mc,md))
+	else:
+		logger.error("error while process memory sampling data")
+	return (mc,md)
+
+def processMemSamplingDataLogin(data):
 	ma = mb = me = mc = md = n = None
 	for idx,val in enumerate(data):
 		if val == "op_start":
@@ -246,6 +294,17 @@ def sendMail(content):
 			html=content,
 			images=[pic_cpu_usage])
 
+def readcfg():
+	with open('cfg.json') as fp:
+		cfg=json.loads(fp.read())
+		fp.close()
+	return cfg
+
+def writecfg():
+	with open('cfg.json','w+') as fp:
+		fp.write(json.dumps(cfg))
+		fp.close()
+
 def initEnv():
 	"""Standardlize enviroment"""
 	appdata=os.getenv('LOCALAPPDATA')
@@ -273,9 +332,12 @@ def main():
 	initUrlLib()
 	initEnv()
 
+	global cfg
+	cfg=readcfg()
+	cfg["sampl_id"] += 1
 	#cpuSampling()
-	mem_login=memSampling(api_mem_sampling_login)
-	return
+
+	#mem_login=memSampling(api_mem_sampling_login)
 	mem_aio=memSampling(api_mem_sampling_aio)
 	mem_buddy_list=memSampling(api_mem_sampling_buddy_list)
 	mem_group_list=memSampling(api_mem_sampling_group_list)
@@ -345,6 +407,7 @@ def main():
 		fp.write(mailHtmlContent.encode("utf-8"))
 
 	sendMail(mailHtmlContent)
+	writecfg()
 
 if __name__ == '__main__':
 	try:
@@ -355,4 +418,4 @@ if __name__ == '__main__':
 		pass
 	except:
 		logger.error("script exit", exc_info=1)
-		sendErrorMail(errorReport("脚本执行异常","详细信息查看log"))
+		sendErrorMail(errorReport("脚本执行异常",""))

@@ -38,6 +38,8 @@ def save_api_req_result(version,sampl_id,api_name,api_result,req_time,req_end_ti
 
 	cur = conn.cursor()
 	req_id=get_apiid_byname(api_name)
+	if not req_id:
+		raise Exception("获取api_id失败,api %s 未注册" % api_name)
 	sql="INSERT INTO api_req_data (qq_version,samp_id,api_req_id,api_req_result,api_req_time,api_end_time) VALUES ('%(qq_version)s','%(samp_id)s','%(api_req_id)d','%(api_req_result)s','%(api_req_time)s','%(api_end_time)s')" % {
 		"qq_version": version,
 		"samp_id": sampl_id,
