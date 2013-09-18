@@ -188,7 +188,17 @@ def cpuSampling():
 	retCode=jsonResult['ret']
 	data=jsonResult['data']
 	if retCode == 0 and data != None:
+		os.system('del %s' % pic_cpu_usage)
 		processCpuSamplingData(data)
+		if os.path.isfile(pic_cpu_usage):
+			valid_flag=1
+		else:
+			valid_flag=0
+		db.update_api_req_result(version=cfg["cur_qq_version"],
+				sampl_id=cfg["sampl_id"],
+				api_name=api_cpu_sampling,
+				valid_flag=valid_flag
+				)
 	else:
 		sendErrorMail(errorReport("API请求错误 %s" % api_cpu_sampling, result))
 		sys.exit(1)
@@ -199,18 +209,32 @@ def memSampling(api_name):
 	jsonResult=json.loads(result)
 	retCode=jsonResult['ret']
 	data=jsonResult['data']
+	analysisResult=None
+	valid_flag=None
 	if retCode == 0 and data != None:
 		# they use different algorithm to caculate ma mb and me
 		if api_name == api_mem_sampling_login:
-			return processMemSamplingDataLogin(data)
+			analysisResult = processMemSamplingDataLogin(data)
 		elif api_name in (api_mem_sampling_aio,
 				api_mem_sampling_buddy_list,
 				api_mem_sampling_group_list,
 				api_mem_sampling_qz):
-			return processMemSamplingDataHome(data)
-		else:
+			analysisResult = processMemSamplingDataHome(data)
+
+		if analysisResult is None:
 			sendErrorMail(errorReport("未针对此api实现内存数据分析方法 %s" % api_name))
 			sys.exit(1)
+
+		if analysisResult[0] is None or analysisResult[1] is None:
+			valid_flag=1
+		else:
+			valid_flag=1
+
+		db.update_api_req_result(version=cfg["cur_qq_version"],
+				sampl_id=cfg["sampl_id"],
+				api_name=api_name,
+				valid_flag=valid_flag
+				)
 	else:
 		sendErrorMail(errorReport("API请求错误 %s" % api_name, result))
 		sys.exit(1)
@@ -335,9 +359,9 @@ def main():
 	global cfg
 	cfg=readcfg()
 	cfg["sampl_id"] += 1
-	#cpuSampling()
+	cpuSampling()
 
-	#mem_login=memSampling(api_mem_sampling_login)
+	mem_login=memSampling(api_mem_sampling_login)
 	mem_aio=memSampling(api_mem_sampling_aio)
 	mem_buddy_list=memSampling(api_mem_sampling_buddy_list)
 	mem_group_list=memSampling(api_mem_sampling_group_list)
